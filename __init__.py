@@ -41,24 +41,22 @@ def classFactory(iface):  # pylint: disable=invalid-name
 
 
 def installDependencies(iface):
+    dependencies_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dependencies')
+    try:
+        import isodate
+    except ImportError:
+        path = os.path.join(dependencies_dir, 'isodate-0.6.1-py2.py3-none-any.whl')
+        sys.path.append(path)
+        import isodate
     try:
         import rdflib
     except ImportError:
-        pip = importPip(iface)
-        if pip is not None:
-            pip.main(['install', 'rdflib'])
+        path = os.path.join(dependencies_dir, 'rdflib-6.3.2-py3-none-any.whl')
+        sys.path.append(path)
+        import rdflib
     try:
         import SPARQLWrapper
     except ImportError:
-        if pip is not None:
-            pip = importPip(iface)
-            pip.main(['install', 'SPARQLWrapper'])
-
-
-def importPip(iface):
-    try:
-        import pip
-        return pip
-    except ImportError:
-        iface.messageBar().pushMessage("Error", "You need to install PIP", level=Qgis.Critical)
-        return None
+        path = os.path.join(dependencies_dir, 'SPARQLWrapper-2.0.0-py3-none-any.whl')
+        sys.path.append(path)
+        import rdflib
