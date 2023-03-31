@@ -1,0 +1,29 @@
+<RCC>
+    <qresource prefix="/plugins/sc_qgis" >
+        <file>add.png</file>
+        <file>add_endpoint.png</file>
+        <file>copy.png</file>
+        <file>edit.png</file>
+        <file>exportRDF.png</file>
+        <file>geojson.png</file>
+        <file>geom_variable.png</file>
+        <file>geopackage.png</file>
+        <file>help.png</file>
+        <file>icon.png</file>
+        <file>lon_lat_variable.png</file>
+        <file>map_layers.png</file>
+        <file>memory.png</file>
+        <file>query_results_dir.png</file>
+		<file>paste.png</file>
+        <file>pk.png</file>
+        <file>prefix.png</file>
+        <file>prefixes.png</file>
+        <file>remove.png</file>
+        <file>run_query.png</file>
+        <file>save_query.png</file>
+        <file>saved_queries.png</file>
+        <file>show_endpoints.png</file>
+        <file>SPARQL.png</file>
+        <file>test.png</file>
+    </qresource>
+</RCC>
