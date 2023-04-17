@@ -3,6 +3,7 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 from qgis.core import *
 from .resources import *
+import platform
 
 from .sc_qgis_dockwidget import SemanticComponentsDockWidget
 from .sc_export_layers_manager import ExportLayersManager
@@ -104,6 +105,7 @@ class SemanticComponents:
                 self.export_layers_manager = ExportLayersManager(self.project, self.dockwidget, self.logger)
                 self.connections_manager = ConnectionsManager(self.dockwidget, self.logger)
                 self.query_manager = QueryManager(self.project, self.dockwidget, self.connections_manager, self.logger)
+                self.dockwidget.manual_button.clicked.connect(self.openManual)
                 self.dockwidget.run_query_button.clicked.connect(self.query_manager.runQuery)
                 self.dockwidget.add_connection_button.clicked.connect(lambda: self.connections_manager.openConnectionDialog(None))
                 self.dockwidget.show_connections_button.clicked.connect(self.connections_manager.showConnections)
@@ -122,8 +124,11 @@ class SemanticComponents:
             self.dockwidget.show()
             self.dockwidget.artificialResize()
 
-    def installDependencies(self):
-        dependencies_dir = os.path.join(os.path.dirname(__file__), 'dependencies', '*.whl')
-        whl_files = glob.glob(dependencies_dir)
-        for whl_file in whl_files:
-            os.system('pip install %s' % whl_file)
+    def openManual(self):
+        manual_path = os.path.join(self.plugin_dir, 'manual.pdf')
+        if platform.system() == "Windows":
+            os.startfile(manual_path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", manual_path])
+        else:
+            subprocess.Popen(["xdg-open", manual_path])
