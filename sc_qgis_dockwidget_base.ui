@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>935</width>
-    <height>393</height>
+    <height>391</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -287,7 +287,7 @@
            </property>
            <property name="maximumSize">
             <size>
-             <width>20</width>
+             <width>30</width>
              <height>16777215</height>
             </size>
            </property>
@@ -303,6 +303,12 @@
            <property name="styleSheet">
             <string notr="true">color: rgb(255, 170, 127);</string>
            </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOff</enum>
+           </property>
           </widget>
          </item>
          <item>
@@ -314,6 +320,15 @@
              <weight>50</weight>
              <bold>false</bold>
             </font>
+           </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <property name="horizontalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
            </property>
            <property name="plainText">
             <string/>
@@ -565,6 +580,12 @@
            <layout class="QVBoxLayout" name="verticalLayout">
             <item>
              <widget class="QRadioButton" name="export_file_button">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="toolTip">
                <string>Export data to file</string>
               </property>
@@ -578,9 +599,33 @@
             </item>
             <item>
              <widget class="QWidget" name="file_path_widget" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>30</height>
+               </size>
+              </property>
               <layout class="QHBoxLayout" name="horizontalLayout_3">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QLabel" name="file_path_label">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>20</height>
+                  </size>
+                 </property>
                  <property name="text">
                   <string>File path:</string>
                  </property>
@@ -629,9 +674,33 @@
             </item>
             <item>
              <widget class="QWidget" name="rdf_notation_widget" native="true">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>30</height>
+               </size>
+              </property>
               <layout class="QHBoxLayout" name="horizontalLayout_4">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QLabel" name="rdf_notation_label">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>20</height>
+                  </size>
+                 </property>
                  <property name="text">
                   <string>RDF Notation</string>
                  </property>
@@ -686,13 +755,19 @@
             </item>
             <item>
              <widget class="QLabel" name="uri_label">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="text">
                <string>URI Settings</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QWidget" name="horizontalWidget" native="true">
+             <widget class="QWidget" name="base_uri_widget" native="true">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -706,8 +781,26 @@
                </size>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_5">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
                <item>
                 <widget class="QLabel" name="base_uri_label">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>20</height>
+                  </size>
+                 </property>
                  <property name="text">
                   <string>Base URI:</string>
                  </property>

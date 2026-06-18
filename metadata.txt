@@ -6,26 +6,28 @@
 name=SC QGIS Plugin
 qgisMinimumVersion=3.22
 description=Plugin enables processing, managing and visualizing spatial and graph data
-version=1.0
-author=WIZIPISI
-email=wizipisi@wizipisi.pl
+version=1.2
+author=The Wroclaw Institute of Spatial Information and Artificial Intelligence
+email=biuro@wizipisi.ai
 
 about=Plugin offers tools for importing, exporting and processing Linked Data.
 
-tracker=http://bugs
-repository=http://repo
+tracker=https://github.com/Przemek2829/sc_qgis/issues
+repository=https://github.com/Przemek2829/sc_qgis
 # End of mandatory metadata
 
 # Recommended items:
 
 hasProcessingProvider=no
-# Uncomment the following line and add your changelog:
-# changelog=
+changelog=
+    1.2 - Asynchronous layer export running as a background task, export dialog
+          improvements, updated plugin metadata and various bug fixes.
+    1.0 - Initial release.
 
 # Tags are comma separated with spaces allowed
-tags=python
+tags=python, linked data, sparql, rdf, semantic web, graph data
 
-homepage=http://homepage
+homepage=https://github.com/Przemek2829/sc_qgis
 category=Plugins
 icon=icon.png
 # experimental flag

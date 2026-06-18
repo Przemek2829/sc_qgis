@@ -3,7 +3,7 @@ import os
 from qgis.PyQt.QtCore import Qt, QSize
 from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt import uic
-from qgis.PyQt.QtWidgets import QDialog, QTreeWidgetItem, QLineEdit, QComboBox, QPushButton
+from qgis.PyQt.QtWidgets import *
 from qgis.core import *
 import sys
 
@@ -45,6 +45,19 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
         self.project = project
         self.export_config = export_config
         self.setupUi(self)
+        screen = QApplication.primaryScreen()
+        container_layout = self.container_widget.layout()
+
+        layers_tree = container_layout.takeAt(0)
+        attributes_tree = container_layout.takeAt(0)
+        metadata_widget = container_layout.takeAt(0)
+        splitter = QSplitter()
+        splitter.addWidget(layers_tree.widget())
+        splitter.addWidget(attributes_tree.widget())
+        splitter.addWidget(metadata_widget.widget())
+        container_layout.addWidget(splitter)
+
+        self.resize(screen.size().width() - 100, self.size().height())
         self.resizeEvent = self.adjustSize
         self.layers_tree.itemClicked.connect(self.manageCheckState)
         self.layers_tree.itemClicked.connect(self.showLayerFields)
@@ -61,6 +74,7 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
                                       scn.GEOSPARQL_WKT.value: 'True'}
         self.rdf_types_dialog = RdfTypesDialog()
         self.rdf_types_dialog.finished.connect(self.getRdfTypes)
+        self.select_all_attributes.stateChanged.connect(self.toggleAttributesState)
 
     def adjustSize(self, event):
         width = event.size().width()
@@ -77,6 +91,13 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
     def artificialResize(self):
         self.resize(self.size().width() - 1, self.size().height() - 1)
         self.resize(self.size().width() + 1, self.size().height() + 1)
+
+    def toggleAttributesState(self, state):
+        attributes_root = self.attributes_tree.invisibleRootItem()
+        for i in range(0, attributes_root.childCount()):
+            attribute_item = attributes_root.child(i)
+            attribute_item.setCheckState(0, state)
+            self.changeAttributesCheckState(attribute_item, 0)
 
     def manageCheckState(self, item, column):
         if item.parent() is None:
@@ -124,8 +145,8 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
             pk_indexes = layer.dataProvider().pkAttributeIndexes()
             pk_index = None if len(pk_indexes) == 0 else pk_indexes[0]
             fields_config = self.export_config[layer_id][1]
-            c = 0
-            for field in layer.fields():
+            checked_items = 0
+            for c, field in enumerate(layer.fields()):
                 field_name = field.displayName()
                 field_item = self.createFieldTreeItem(field_name, field.typeName(), layer_id)
                 is_pk = c == pk_index
@@ -135,10 +156,17 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
                     if is_pk:
                         field_item.setIcon(0, PK_ICON)
                 else:
-                    field_item.setCheckState(0, fields_config[field_name][0])
+                    check_state = fields_config[field_name][0]
+                    field_item.setCheckState(0, check_state)
+                    if check_state == 2:
+                        checked_items = checked_items + 1
                     if fields_config.get(field_name)[1][scn.URI_KEY.value] == 'True':
                         field_item.setIcon(0, PK_ICON)
-                c += 1
+            c += 1
+            if checked_items == c:
+                self.select_all_attributes.setCheckState(2)
+            else:
+                self.select_all_attributes.setCheckState(0)
 
     def createFieldTreeItem(self, field_name, field_type, layer_id):
         field_item = QTreeWidgetItem(self.attributes_tree)
@@ -230,44 +258,46 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
             self.metadata_tree.expandItem(output_geometry_group_item)
             self.changeItemsSizeHint(output_geometry_group_item)
         else:
-            field_config_metadata = self.export_config[layer_id][1][field_name][1]
+            field_config = self.export_config[layer_id][1].get(field_name, None)
             self.metadata_title_label.setText('Field: %s' % field_name)
 
             # Create metadata tree widgets
-            group_item = QTreeWidgetItem(self.metadata_tree)
-            group_item.setText(0, 'Field')
-            self.createMetadataTreeItem(group_item, 'Field name', field_name)
-            output_field_line_edit = self.createMetadataWidget(
-                QLineEdit(field_config_metadata[scn.OUTPUT_FIELD_NAME.value]),
-                layer_id, field_config_metadata, scn.OUTPUT_FIELD_NAME.value,
-                field_name, 1)
-            self.createMetadataTreeItem(group_item, scn.OUTPUT_FIELD_NAME.value, None, output_field_line_edit)
-            self.createMetadataTreeItem(group_item, 'Type', field_type)
-            literal_type_combo = self.createMetadataWidget(QComboBox(), layer_id, field_config_metadata,
-                                                           scn.LITERAL_TYPE.value,
-                                                           field_name, 1, set(XML_SCHEMA_TYPES.values()),
-                                                           field_type.lower())
-            self.createMetadataTreeItem(group_item, scn.LITERAL_TYPE.value, None, literal_type_combo)
-            include_default_rdf_type_combo = self.createMetadataWidget(QComboBox(), layer_id, field_config_metadata,
-                                                                       scn.INCLUDE_DEFAULT_RDF_TYPE.value, field_name,
-                                                                       1)
-            self.createMetadataTreeItem(group_item, scn.INCLUDE_DEFAULT_RDF_TYPE.value, None,
-                                        include_default_rdf_type_combo)
-            custom_uri_line_edit = self.createMetadataWidget(QLineEdit(field_config_metadata[scn.CUSTOM_URI.value]),
-                                                             layer_id,
-                                                             field_config_metadata, scn.CUSTOM_URI.value, field_name, 1)
-            custom_uri_line_edit.textEdited.connect(lambda uri: url_validator.validateUrl(uri, custom_uri_line_edit))
-            self.createMetadataTreeItem(group_item, scn.CUSTOM_URI.value, None, custom_uri_line_edit)
-            as_relation_combo = self.createMetadataWidget(QComboBox(), layer_id, field_config_metadata,
-                                                          scn.AS_RELATION.value,
+            if field_config:
+                field_config_metadata = field_config[1]
+                group_item = QTreeWidgetItem(self.metadata_tree)
+                group_item.setText(0, 'Field')
+                self.createMetadataTreeItem(group_item, 'Field name', field_name)
+                output_field_line_edit = self.createMetadataWidget(
+                    QLineEdit(field_config_metadata[scn.OUTPUT_FIELD_NAME.value]),
+                    layer_id, field_config_metadata, scn.OUTPUT_FIELD_NAME.value,
+                    field_name, 1)
+                self.createMetadataTreeItem(group_item, scn.OUTPUT_FIELD_NAME.value, None, output_field_line_edit)
+                self.createMetadataTreeItem(group_item, 'Type', field_type)
+                literal_type_combo = self.createMetadataWidget(QLineEdit(), layer_id, field_config_metadata,
+                                                               scn.LITERAL_TYPE.value,
+                                                               field_name, 1, set(XML_SCHEMA_TYPES.values()),
+                                                               field_type.lower())
+                self.createMetadataTreeItem(group_item, scn.LITERAL_TYPE.value, None, literal_type_combo)
+                include_default_rdf_type_combo = self.createMetadataWidget(QComboBox(), layer_id, field_config_metadata,
+                                                                           scn.INCLUDE_DEFAULT_RDF_TYPE.value, field_name,
+                                                                           1)
+                self.createMetadataTreeItem(group_item, scn.INCLUDE_DEFAULT_RDF_TYPE.value, None,
+                                            include_default_rdf_type_combo)
+                custom_uri_line_edit = self.createMetadataWidget(QLineEdit(field_config_metadata[scn.CUSTOM_URI.value]),
+                                                                 layer_id,
+                                                                 field_config_metadata, scn.CUSTOM_URI.value, field_name, 1)
+                custom_uri_line_edit.textEdited.connect(lambda uri: url_validator.validateUrl(uri, custom_uri_line_edit))
+                self.createMetadataTreeItem(group_item, scn.CUSTOM_URI.value, None, custom_uri_line_edit)
+                as_relation_combo = self.createMetadataWidget(QComboBox(), layer_id, field_config_metadata,
+                                                              scn.AS_RELATION.value,
+                                                              field_name, 1)
+                self.createMetadataTreeItem(group_item, scn.AS_RELATION.value, None, as_relation_combo)
+                uri_key_combo = self.createMetadataWidget(QComboBox(), layer_id, field_config_metadata, scn.URI_KEY.value,
                                                           field_name, 1)
-            self.createMetadataTreeItem(group_item, scn.AS_RELATION.value, None, as_relation_combo)
-            uri_key_combo = self.createMetadataWidget(QComboBox(), layer_id, field_config_metadata, scn.URI_KEY.value,
-                                                      field_name, 1)
-            self.createMetadataTreeItem(group_item, scn.URI_KEY.value, None, uri_key_combo)
+                self.createMetadataTreeItem(group_item, scn.URI_KEY.value, None, uri_key_combo)
 
-            self.metadata_tree.expandItem(group_item)
-            self.changeItemsSizeHint(group_item)
+                self.metadata_tree.expandItem(group_item)
+                self.changeItemsSizeHint(group_item)
 
     def createMetadataTreeItem(self, parent_item, label, value, widget=None):
         metadata_item = QTreeWidgetItem(parent_item)
@@ -286,14 +316,6 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
             if items is None:
                 widget.addItems(['True', 'False'])
                 widget.setCurrentText(config_metadata[key])
-            else:
-                widget.setEditable(True)
-                widget.addItems(items)
-                if config_metadata[key] == '':
-                    widget.setCurrentText(XML_SCHEMA_TYPES.get(field_type, ''))
-                    config_metadata[key] = XML_SCHEMA_TYPES.get(field_type, '')
-                else:
-                    widget.setCurrentText(config_metadata[key])
             if field_name is None:
                 widget.currentTextChanged.connect(
                     lambda: self.layerMeatadataChanged(layer_id, key, widget.currentText()))
@@ -303,6 +325,16 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
                                                           widget.currentText(), idx))
         elif widget_class == 'QLineEdit':
             widget.setClearButtonEnabled(True)
+            if items is not None:
+                completer = QCompleter(items)
+                completer.setFilterMode(Qt.MatchContains)
+                completer.setCaseSensitivity(Qt.CaseInsensitive)
+                widget.setCompleter(completer)
+                if config_metadata[key] == '':
+                    widget.setText(XML_SCHEMA_TYPES.get(field_type, ''))
+                    config_metadata[key] = XML_SCHEMA_TYPES.get(field_type, '')
+                else:
+                    widget.setText(config_metadata[key])
             if field_name is None:
                 widget.editingFinished.connect(
                     lambda: self.layerMeatadataChanged(layer_id, key, widget.text()))
@@ -378,4 +410,6 @@ class ExportLayersDialog(QDialog, FORM_CLASS):
             idx = 1
         else:
             idx = 2
-        self.export_config[item.data(0, 100)][idx][item.text(0)][0] = item.checkState(0)
+        field_config = self.export_config[item.data(0, 100)][idx].get(item.text(0))
+        if field_config:
+            field_config[0] = item.checkState(0)

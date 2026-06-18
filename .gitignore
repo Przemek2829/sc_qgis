@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Compiled Qt translations (keep .ts sources)
+*.qm
+
+# Packaged plugin
+*.zip
+
+# IDE / editors
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS cruft
+.DS_Store
+Thumbs.db

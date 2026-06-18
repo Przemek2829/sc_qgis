@@ -5,14 +5,15 @@ import json
 import re
 
 from qgis.PyQt.QtCore import Qt, QSize
-from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon, QFont, QTextCursor
 from qgis.PyQt.QtWidgets import QDialog, QTreeWidgetItem, QPushButton, QWidget, QHBoxLayout, QLabel, QMessageBox, \
-    QInputDialog
+    QInputDialog, QPlainTextEdit
 from qgis.PyQt import uic
 from qgis.core import *
 
 from .sc_logger_mode import SCLoggerMode
 from .sc_messenger import Messenger as msg
+from .sc_sparqlhighlighter import SPARQLHighlighter
 
 sys.path.append(os.path.dirname(__file__))
 
@@ -90,6 +91,7 @@ class QueriesDialog(QDialog, FORM_CLASS):
             query_metadata = self.queries.get(query_name)
             query_text = query_metadata.get('query_text')
             self.qm.dockwidget.query_text_edit.setPlainText(query_text)
+            self.qm.dockwidget.query_text_edit.moveCursor(QTextCursor.End)
 
     def openEditQueryDialog(self, query_name, item):
         dialog = QInputDialog()
@@ -148,12 +150,22 @@ class QueriesDialog(QDialog, FORM_CLASS):
         connection_name = 'Undefined' if connection_name == '' else connection_name
         connection_item.setText(0, connection_name)
         query_text = query_metadata.get('query_text')
-        variables = set(re.findall('\\?[^\\s\t\r\n]+', query_text))
+        select_where = re.sub('^select(.*)where\\s*{.*$', r'\1', query_text.replace('\n', ' '), flags=re.IGNORECASE)
+        variables = set(re.findall('\\?[^\\s\t\r\n]+', select_where))
         variables_group_item = QTreeWidgetItem(self.metadata_tree)
         variables_group_item.setText(0, 'Variables')
         for variable in variables:
             variable_item = QTreeWidgetItem(variables_group_item)
             variable_item.setText(0, variable)
+        query_group_item = QTreeWidgetItem(self.metadata_tree)
+        query_group_item.setText(0, 'Query text')
+        query_item = QTreeWidgetItem(query_group_item)
+        query_plain_text = QPlainTextEdit()
+        sparqlhighlight = SPARQLHighlighter(query_plain_text)
+        query_plain_text.setPlainText(query_text)
+        query_plain_text.setReadOnly(True)
+        query_plain_text.setFont(QFont('Courier New'))
+        self.metadata_tree.setItemWidget(query_item, 0, query_plain_text)
         self.expandAndChangeSizeHint()
 
     def expandAndChangeSizeHint(self):
