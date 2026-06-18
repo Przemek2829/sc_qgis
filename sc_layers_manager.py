@@ -1,11 +1,13 @@
 from qgis.core import *
 from PyQt5.QtCore import *
 from qgis.PyQt.QtCore import QSettings as qs
+from qgis.PyQt.QtWidgets import QMessageBox
 import os
 import re
 from collections import OrderedDict
 
 from .sc_logger_mode import SCLoggerMode
+from .sc_messenger import Messenger as msg
 from .sc_names import ScNames as scn
 
 TYPES_MAP = {'String': QVariant.String}
@@ -26,19 +28,15 @@ class LayersManager:
         self.addLayerFields(layer, structure)
         self.addLayerFeatures(layer, layer_crs, features_data, structure, geom_type)
         saved_layer = self.saveLayer(layer, geom_type)
-        self.project.addMapLayer(saved_layer)
+        if saved_layer is not None:
+            self.project.addMapLayer(saved_layer)
 
     def getLayerStructure(self, geom_type, features):
         structure = OrderedDict()
         for feature in features:
-            data_complete = True
             for field_name, field_metadata in feature.items():
-                if field_metadata is None or str(field_metadata).strip() == '':
-                    data_complete = False
                 if field_name != 'geometry' or (field_name == 'geometry' and geom_type is None):
                     structure[field_name] = TYPES_MAP.get(field_metadata[0], QVariant.String)
-            if data_complete:
-                break
         return structure
 
     def createLayer(self, layer_name, geom_type, layer_crs):
@@ -82,14 +80,40 @@ class LayersManager:
     def saveLayer(self, layer, geom_type):
         settings = qs()
         save_format = settings.value(scn.SC_SAVE_FORMAT.value)
+        can_save = True
         if save_format != scn.MEMORY.value:
             layer_name = layer.name()
             if geom_type is not None:
                 save_file = os.path.join(SAVE_DIR, '%s_%s.%s' % (layer_name, geom_type.lower(), save_format.lower()))
             else:
                 save_file = os.path.join(SAVE_DIR, '%s.%s' % (layer_name, save_format.lower()))
-            save_options = QgsVectorFileWriter.SaveVectorOptions()
-            save_options.driverName = save_format
-            QgsVectorFileWriter.writeAsVectorFormat(layer, save_file, save_options)
-            return QgsVectorLayer(save_file, layer_name, "ogr")
+            if os.path.exists(save_file):
+                return_value = msg.createMessage('Layer Exists', QMessageBox.Question, 'Layer <b>%s</b> exists, do you want to overwrite?' % layer.name())
+                if return_value == QMessageBox.Ok:
+                    layer_exists = False
+                    for map_layer in self.project.mapLayers().values():
+                        provider = map_layer.dataProvider()
+                        if save_file == provider.dataSourceUri():
+                            layer_exists = True
+                            map_layer.startEditing()
+                            ids = [feat.id() for feat in map_layer.getFeatures()]
+                            map_layer.deleteFeatures(ids)
+                            layer_fields = map_layer.fields()
+                            fields = list(map(lambda f: layer_fields.indexFromName(f.name()), filter(lambda f: f.name() != 'fid', map_layer.fields())))
+                            provider.deleteAttributes(fields)
+                            map_layer.commitChanges()
+                            self.project.removeMapLayer(map_layer)
+                    if not layer_exists:
+                        os.remove(save_file)
+                else:
+                    can_save = False
+            if can_save:
+                save_options = QgsVectorFileWriter.SaveVectorOptions()
+                save_options.driverName = save_format
+                if os.path.exists(save_file):
+                    save_options.actionOnExistingFile = QgsVectorFileWriter.AppendToLayerAddFields
+                QgsVectorFileWriter.writeAsVectorFormat(layer, save_file, save_options)
+                return QgsVectorLayer(save_file, layer_name, "ogr")
+            else:
+                return None
         return layer

@@ -4,6 +4,7 @@ from qgis.PyQt.QtWidgets import QAction
 from qgis.core import *
 from .resources import *
 import platform
+import subprocess as sp
 
 from .sc_qgis_dockwidget import SemanticComponentsDockWidget
 from .sc_export_layers_manager import ExportLayersManager
@@ -102,7 +103,7 @@ class SemanticComponents:
             if self.dockwidget is None:
                 self.dockwidget = SemanticComponentsDockWidget()
                 self.logger = SCLogger(self.iface)
-                self.export_layers_manager = ExportLayersManager(self.project, self.dockwidget, self.logger)
+                self.export_layers_manager = ExportLayersManager(self.iface, self.project, self.dockwidget, self.logger)
                 self.connections_manager = ConnectionsManager(self.dockwidget, self.logger)
                 self.query_manager = QueryManager(self.project, self.dockwidget, self.connections_manager, self.logger)
                 self.dockwidget.manual_button.clicked.connect(self.openManual)
@@ -125,10 +126,10 @@ class SemanticComponents:
             self.dockwidget.artificialResize()
 
     def openManual(self):
-        manual_path = os.path.join(self.plugin_dir, 'manual.pdf')
+        manual_path = os.path.join(self.plugin_dir, 'Wtyczka_SC_QGIS.pdf')
         if platform.system() == "Windows":
             os.startfile(manual_path)
         elif platform.system() == "Darwin":
-            subprocess.Popen(["open", manual_path])
+            sp.Popen(["open", manual_path])
         else:
-            subprocess.Popen(["xdg-open", manual_path])
+            sp.Popen(["xdg-open", manual_path])
