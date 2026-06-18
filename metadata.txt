@@ -6,7 +6,7 @@
 name=SC QGIS Plugin
 qgisMinimumVersion=3.22
 description=Plugin enables processing, managing and visualizing spatial and graph data
-version=1.2
+version=1.2.1
 author=The Wroclaw Institute of Spatial Information and Artificial Intelligence
 email=biuro@wizipisi.ai
 
@@ -20,6 +20,8 @@ repository=https://github.com/Przemek2829/sc_qgis
 
 hasProcessingProvider=no
 changelog=
+    1.2.1 - Removed the developer-only plugin_upload.py helper script flagged by
+            the QGIS plugin security scanner; no change to plugin functionality.
     1.2 - Asynchronous layer export running as a background task, export dialog
           improvements, updated plugin metadata and various bug fixes.
     1.0 - Initial release.
